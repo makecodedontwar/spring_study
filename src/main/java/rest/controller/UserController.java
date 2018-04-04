@@ -2,12 +2,11 @@ package rest.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import rest.domain.User;
 import rest.persistance.Storage;
 
-import java.net.URI;
 import java.util.List;
 
 
@@ -16,9 +15,12 @@ public class UserController {
 
     private Storage storage;
 
+    private KafkaTemplate<String, User> kafkaTemplate;
+
     @Autowired
-    public UserController(Storage storage) {
+    public UserController(Storage storage, KafkaTemplate<String, User> kafkaTemplate) {
         this.storage = storage;
+        this.kafkaTemplate = kafkaTemplate;
     }
 
     @GetMapping("/users")
@@ -38,11 +40,8 @@ public class UserController {
 
     @PostMapping("/users")
     public ResponseEntity createUser(@RequestBody User user) {
-        User save = storage.save(user);
-        URI uri = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
-                .buildAndExpand(save.getId()).toUri();
-
-        return ResponseEntity.created(uri).build();
+        kafkaTemplate.send("user", user);
+        return ResponseEntity.noContent().build();
     }
 
     @PutMapping("/users/{id}")

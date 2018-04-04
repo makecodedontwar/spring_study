@@ -1,5 +1,6 @@
 package rest.persistance;
 
+import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 import rest.domain.User;
 
@@ -19,6 +20,7 @@ public class Storage {
         users.put(3, new User(3, "Ivan"));
     }
 
+    @KafkaListener(topics = "user", groupId = "users")
     public User save(User user) {
         users.put(user.getId(), user);
         return user;
